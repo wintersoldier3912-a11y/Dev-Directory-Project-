@@ -47,8 +47,8 @@ Create a `.env` file in the root if you wish to change ports (optional).
 3. Update `services/api.ts` with the production Backend URL.
 
 ## Contact
-- **Repo:** [Your GitHub Link]
-- **Hosted App:** [Your Hosted Link]
-- **Name:** [Your Name]
+- **Repo:** [Link is provided ]
+- **Hosted App:** To be deployed
+- **Name:** Anish
 - **Availability:** Immediate
 
