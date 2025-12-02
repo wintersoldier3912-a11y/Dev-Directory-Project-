@@ -1,0 +1,5 @@
+{
+  "name": "DevDirectory",
+  "description": "A full-stack developer directory application to list, filter, and add developer profiles with a responsive UI and Express backend.",
+  "requestFramePermissions": []
+}
