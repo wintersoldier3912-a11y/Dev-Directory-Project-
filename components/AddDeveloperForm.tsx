@@ -13,6 +13,7 @@ interface Errors {
   role?: string;
   techStack?: string;
   experience?: string;
+  about?: string;
 }
 
 export const AddDeveloperForm: React.FC<AddDeveloperFormProps> = ({ onClose, onSubmit, initialData }) => {
@@ -20,7 +21,9 @@ export const AddDeveloperForm: React.FC<AddDeveloperFormProps> = ({ onClose, onS
     name: '',
     role: ROLES[0],
     techStack: '',
-    experience: 0
+    experience: 0,
+    about: '',
+    joiningDate: new Date().toISOString().split('T')[0]
   });
   const [errors, setErrors] = useState<Errors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -31,7 +34,9 @@ export const AddDeveloperForm: React.FC<AddDeveloperFormProps> = ({ onClose, onS
         name: initialData.name,
         role: initialData.role,
         techStack: initialData.techStack.join(', '),
-        experience: initialData.experience
+        experience: initialData.experience,
+        about: initialData.about || '',
+        joiningDate: initialData.joiningDate ? initialData.joiningDate.split('T')[0] : new Date().toISOString().split('T')[0]
       });
     }
   }, [initialData]);
@@ -61,9 +66,11 @@ export const AddDeveloperForm: React.FC<AddDeveloperFormProps> = ({ onClose, onS
       
       await onSubmit({
         name: formData.name,
-        role: formData.role,
+        role: formData.role as Role,
         techStack: techArray,
-        experience: Number(formData.experience)
+        experience: Number(formData.experience),
+        about: formData.about,
+        joiningDate: formData.joiningDate
       });
     } finally {
       setIsSubmitting(false);
@@ -134,18 +141,45 @@ export const AddDeveloperForm: React.FC<AddDeveloperFormProps> = ({ onClose, onS
                 {errors.techStack && <p className="mt-1 text-sm text-red-600 flex items-center"><AlertCircle className="w-4 h-4 mr-1"/> {errors.techStack}</p>}
               </div>
 
-              {/* Experience */}
+              <div className="grid grid-cols-2 gap-4">
+                {/* Experience */}
+                <div>
+                  <label htmlFor="experience" className="block text-sm font-medium text-gray-700">Experience (Years)</label>
+                  <input
+                    type="number"
+                    id="experience"
+                    min="0"
+                    className={`mt-1 block w-full border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm ${errors.experience ? 'border-red-300' : 'border-gray-300'}`}
+                    value={formData.experience}
+                    onChange={(e) => setFormData({ ...formData, experience: parseInt(e.target.value) || 0 })}
+                  />
+                  {errors.experience && <p className="mt-1 text-sm text-red-600 flex items-center"><AlertCircle className="w-4 h-4 mr-1"/> {errors.experience}</p>}
+                </div>
+                
+                {/* Joining Date */}
+                <div>
+                  <label htmlFor="joiningDate" className="block text-sm font-medium text-gray-700">Joining Date</label>
+                  <input
+                    type="date"
+                    id="joiningDate"
+                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                    value={formData.joiningDate}
+                    onChange={(e) => setFormData({ ...formData, joiningDate: e.target.value })}
+                  />
+                </div>
+              </div>
+
+               {/* About */}
               <div>
-                <label htmlFor="experience" className="block text-sm font-medium text-gray-700">Experience (Years)</label>
-                <input
-                  type="number"
-                  id="experience"
-                  min="0"
-                  className={`mt-1 block w-full border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm ${errors.experience ? 'border-red-300' : 'border-gray-300'}`}
-                  value={formData.experience}
-                  onChange={(e) => setFormData({ ...formData, experience: parseInt(e.target.value) || 0 })}
+                <label htmlFor="about" className="block text-sm font-medium text-gray-700">About (Bio)</label>
+                <textarea
+                  id="about"
+                  rows={3}
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                  value={formData.about}
+                  onChange={(e) => setFormData({ ...formData, about: e.target.value })}
+                  placeholder="Brief description about the developer..."
                 />
-                {errors.experience && <p className="mt-1 text-sm text-red-600 flex items-center"><AlertCircle className="w-4 h-4 mr-1"/> {errors.experience}</p>}
               </div>
 
               <div className="mt-5 sm:mt-6 sm:grid sm:grid-cols-2 sm:gap-3 sm:grid-flow-row-dense">

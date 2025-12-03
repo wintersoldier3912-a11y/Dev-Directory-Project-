@@ -1,27 +1,30 @@
-# DevDirectory
+# DevDirectory (Round 2)
 
-A Full-Stack Developer Directory App that allows adding, viewing, searching, and filtering developer profiles.
+A production-ready Full-Stack Developer Directory with Authentication, Protected Routes, and Persistence.
+
+## Features
+- **Authentication**: JWT-based Signup and Login.
+- **Protected Routes**: Only authenticated users can access the directory.
+- **Persistent Storage**: Uses a JSON file-based database (Server-side) for data persistence across restarts.
+- **Advanced Filtering**: Filter by Role, Tech Stack, and Search by Name.
+- **Sorting & Pagination**: Sort developers by experience or date; browse with page controls.
+- **Detailed Profiles**: dedicated profile pages with deep linking.
+- **Responsive Design**: Mobile-first UI with Tailwind CSS.
 
 ## Tech Stack
-- **Frontend:** React 18, TypeScript, Tailwind CSS
-- **Backend:** Node.js, Express
-- **Icons:** Lucide React
-- **Persistence:** In-memory array (Mock Database for demo purposes)
+- **Frontend**: React 18, React Router v6, TypeScript, Tailwind CSS
+- **Backend**: Node.js, Express, Native Crypto (for hashing/JWT), File System (DB)
+- **Icons**: Lucide React
 
-## Project Structure
-- `/` - React Frontend Application
-- `/server` - Express Backend Application
-
-## Setup & Run Instructions
+## Setup & Run
 
 ### 1. Start the Backend
 The backend runs on port 3001.
 
 ```bash
-# Navigate to project root (or server folder if extracted)
 cd server
 npm install express cors uuid
-# Install types for development (optional but recommended)
+# Install dev types
 npm install --save-dev @types/express @types/cors @types/uuid ts-node typescript
 
 # Run the server
@@ -29,26 +32,28 @@ npx ts-node index.ts
 ```
 
 ### 2. Start the Frontend
-The frontend runs on port 3000 (or similar).
+The frontend runs on port 3000.
 
 ```bash
-# Navigate to project root
 npm install
 npm run start
 ```
 
-## Environment Variables
-Create a `.env` file in the root if you wish to change ports (optional).
-- `PORT`: Backend port (default: 3001)
+## Demo Credentials
+To login immediately without signing up:
+- **Email**: `admin@talrn.com`
+- **Password**: `password123`
 
-## Deployment Guide
-1. **Frontend:** Build using `npm run build`. Upload the `dist/` or `build/` folder to Vercel/Netlify.
-2. **Backend:** Deploy the `server/` directory to Render, Heroku, or a Vercel Serverless Function.
-3. Update `services/api.ts` with the production Backend URL.
+## Architecture
+- **Auth**: The `AuthContext` manages the JWT token in `localStorage`. The `api.ts` service intercepts requests to add the `Authorization: Bearer <token>` header.
+- **Persistence**: The server uses a `FileDB` class to write to `server/db.json`. This simulates a real NoSQL database but requires no external setup.
+- **Routing**: `react-router-dom` handles client-side routing. `PrivateRoute` ensures unauthenticated users are redirected to Login.
+
+## Deployment
+1. **Frontend**: Build (`npm run build`) and deploy to Vercel/Netlify.
+2. **Backend**: Deploy `server/` to Render/Railway.
+   - *Note*: On ephemeral file systems (like Vercel Functions), data in `db.json` may not persist. For production, switch the `FileDB` class to connect to MongoDB Atlas.
 
 ## Contact
-- **Repo:** [Your GitHub Link]
-- **Hosted App:** [Your Hosted Link]
-- **Name:** [Your Name]
-- **Availability:** Immediate
-
+- **Email**: intern@talrn.com
+- **Availability**: Immediate

@@ -1,132 +1,98 @@
-import { Developer, FilterState, Role } from '../types';
-import { v4 as uuidv4 } from 'uuid';
+import { Developer, FilterState, Role, AuthResponse } from '../types';
 
 const API_URL = 'http://localhost:3001';
 
-// Fallback data for offline mode
-const mockDevelopers: Developer[] = [
-  { id: '1', name: "Aman Roy", role: Role.FULLSTACK, techStack: ["React", "Node.js", "MongoDB"], experience: 3 },
-  { id: '2', name: "Priya Singh", role: Role.FRONTEND, techStack: ["React", "Tailwind"], experience: 2 },
-  { id: '3', name: "Vikram Patel", role: Role.BACKEND, techStack: ["Node.js", "Express", "SQLite"], experience: 4 },
-  { id: '4', name: "Sarah Chen", role: Role.FRONTEND, techStack: ["Vue.js", "Sass", "Firebase"], experience: 5 },
-  { id: '5', name: "David Kim", role: Role.BACKEND, techStack: ["Python", "Django", "PostgreSQL"], experience: 3 },
-  { id: '6', name: "Emma Wilson", role: Role.FULLSTACK, techStack: ["Next.js", "Prisma", "AWS"], experience: 4 },
-  { id: '7', name: "James Lee", role: Role.FRONTEND, techStack: ["React", "Redux", "Material UI"], experience: 2 },
-  { id: '8', name: "Maria Garcia", role: Role.BACKEND, techStack: ["Java", "Spring Boot", "MySQL"], experience: 6 },
-  { id: '9', name: "Robert Taylor", role: Role.FULLSTACK, techStack: ["Angular", ".NET Core", "Azure"], experience: 7 },
-  { id: '10', name: "Lisa Wong", role: Role.FRONTEND, techStack: ["Svelte", "Tailwind", "Vercel"], experience: 1 },
-  { id: '11', name: "Michael Brown", role: Role.BACKEND, techStack: ["Go", "Docker", "Kubernetes"], experience: 4 }
-];
+const getHeaders = () => {
+  const token = localStorage.getItem('token');
+  return {
+    'Content-Type': 'application/json',
+    ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+  };
+};
 
-const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+export interface PaginatedResponse {
+  data: Developer[];
+  total: number;
+  page: number;
+  totalPages: number;
+}
 
-export const fetchDevelopers = async (filters: FilterState): Promise<Developer[]> => {
-  try {
-    const params = new URLSearchParams();
-    if (filters.role) params.append('role', filters.role);
-    if (filters.tech) params.append('tech', filters.tech);
-    if (filters.search) params.append('search', filters.search);
+export const loginUser = async (email: string, password: string): Promise<AuthResponse> => {
+  const response = await fetch(`${API_URL}/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password }),
+  });
+  if (!response.ok) throw new Error('Login failed');
+  return response.json();
+};
 
-    const response = await fetch(`${API_URL}/developers?${params.toString()}`);
-    
-    if (!response.ok) {
-      throw new Error('Failed to fetch developers');
-    }
-    
-    return await response.json();
-  } catch (error) {
-    console.warn("Backend unavailable or fetch failed, serving mock data.", error);
-    
-    // Fallback logic wrapped to prevent re-throwing
-    try {
-      await delay(300); // Simulate network latency
+export const registerUser = async (name: string, email: string, password: string): Promise<AuthResponse> => {
+  const response = await fetch(`${API_URL}/auth/signup`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, email, password }),
+  });
+  if (!response.ok) throw new Error('Registration failed');
+  return response.json();
+};
 
-      let results = [...mockDevelopers];
+export const fetchDevelopers = async (filters: FilterState): Promise<PaginatedResponse> => {
+  const params = new URLSearchParams();
+  if (filters.role) params.append('role', filters.role);
+  if (filters.tech) params.append('tech', filters.tech);
+  if (filters.search) params.append('search', filters.search);
+  if (filters.sort) params.append('sort', filters.sort);
+  params.append('page', filters.page.toString());
+  params.append('limit', '9');
 
-      // Safe filtering
-      if (filters?.role) {
-        results = results.filter(d => d.role === filters.role);
-      }
-
-      if (filters?.tech) {
-        const techQuery = filters.tech.toLowerCase();
-        results = results.filter(d => 
-          d.techStack.some(t => t.toLowerCase().includes(techQuery))
-        );
-      }
-
-      if (filters?.search) {
-        const searchQuery = filters.search.toLowerCase();
-        results = results.filter(d => 
-          d.name.toLowerCase().includes(searchQuery)
-        );
-      }
-
-      return results;
-    } catch (fallbackError) {
-      console.error("Fallback logic failed", fallbackError);
-      return [];
-    }
+  const response = await fetch(`${API_URL}/developers?${params.toString()}`, {
+    headers: getHeaders()
+  });
+  
+  if (!response.ok) {
+    if (response.status === 401) throw new Error('Unauthorized');
+    throw new Error('Failed to fetch developers');
   }
+  
+  return response.json();
+};
+
+export const fetchDeveloperById = async (id: string): Promise<Developer> => {
+  const response = await fetch(`${API_URL}/developers/${id}`, {
+    headers: getHeaders()
+  });
+  if (!response.ok) throw new Error('Developer not found');
+  return response.json();
 };
 
 export const createDeveloper = async (developer: Omit<Developer, 'id'>): Promise<Developer> => {
-  try {
-    const response = await fetch(`${API_URL}/developers`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(developer),
-    });
+  const response = await fetch(`${API_URL}/developers`, {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify(developer),
+  });
 
-    if (!response.ok) {
-      throw new Error('Failed to create developer');
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.warn("Using mock data for creation.", error);
-    await delay(300);
-    
-    const newDev: Developer = {
-      ...developer,
-      id: uuidv4()
-    };
-    mockDevelopers.push(newDev);
-    return newDev;
-  }
+  if (!response.ok) throw new Error('Failed to create developer');
+  return response.json();
 };
 
-export const updateDeveloper = async (id: string, developer: Omit<Developer, 'id'>): Promise<Developer> => {
-  try {
-    const response = await fetch(`${API_URL}/developers/${id}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(developer),
-    });
+export const updateDeveloper = async (id: string, developer: Partial<Developer>): Promise<Developer> => {
+  const response = await fetch(`${API_URL}/developers/${id}`, {
+    method: 'PUT',
+    headers: getHeaders(),
+    body: JSON.stringify(developer),
+  });
 
-    if (!response.ok) {
-      throw new Error('Failed to update developer');
-    }
+  if (!response.ok) throw new Error('Failed to update developer');
+  return response.json();
+};
 
-    return await response.json();
-  } catch (error) {
-    console.warn("Using mock data for update.", error);
-    await delay(300);
+export const deleteDeveloper = async (id: string): Promise<void> => {
+  const response = await fetch(`${API_URL}/developers/${id}`, {
+    method: 'DELETE',
+    headers: getHeaders(),
+  });
 
-    const index = mockDevelopers.findIndex(d => d.id === id);
-    if (index === -1) {
-        // Create if not found in mock to behave nicely
-        const newDev = { ...developer, id };
-        mockDevelopers.push(newDev);
-        return newDev;
-    }
-
-    const updatedDev = { ...mockDevelopers[index], ...developer };
-    mockDevelopers[index] = updatedDev;
-    return updatedDev;
-  }
+  if (!response.ok) throw new Error('Failed to delete developer');
 };
